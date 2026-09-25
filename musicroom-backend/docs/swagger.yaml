@@ -1,0 +1,1672 @@
+basePath: /
+definitions:
+  handlers.addPlaylistTrackRequest:
+    properties:
+      after_track_id:
+        type: string
+      deezer_id:
+        type: integer
+    required:
+    - deezer_id
+    type: object
+  handlers.collaboratorRequest:
+    properties:
+      can_edit:
+        description: |-
+          Omitted means true: an invitation has always meant "may edit", and a
+          client that predates viewers keeps getting what it asked for.
+        type: boolean
+      user_id:
+        type: string
+    required:
+    - user_id
+    type: object
+  handlers.createEventRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      license:
+        enum:
+        - open
+        - invited_only
+        - time_and_location
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      visibility:
+        enum:
+        - public
+        - private
+        type: string
+      vote_end_at:
+        type: string
+      vote_latitude:
+        type: number
+      vote_longitude:
+        type: number
+      vote_radius_meters:
+        type: integer
+      vote_start_at:
+        type: string
+    required:
+    - name
+    type: object
+  handlers.createPlaylistRequest:
+    properties:
+      collaborators:
+        description: Invited at creation, in the same transaction as the playlist
+          itself.
+        items:
+          $ref: '#/definitions/handlers.collaboratorRequest'
+        maxItems: 100
+        type: array
+      description:
+        maxLength: 500
+        type: string
+      license:
+        enum:
+        - open
+        - invited_only
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      visibility:
+        enum:
+        - public
+        - private
+        type: string
+    required:
+    - name
+    type: object
+  handlers.forgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  handlers.friendRequestBody:
+    properties:
+      addressee_id:
+        type: string
+    required:
+    - addressee_id
+    type: object
+  handlers.googleAuthRequest:
+    properties:
+      id_token:
+        type: string
+    required:
+    - id_token
+    type: object
+  handlers.googleExchangeRequest:
+    properties:
+      code:
+        type: string
+      code_verifier:
+        type: string
+    required:
+    - code
+    type: object
+  handlers.inviteRequest:
+    properties:
+      user_id:
+        type: string
+    required:
+    - user_id
+    type: object
+  handlers.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.logoutRequest:
+    properties:
+      refresh_token:
+        description: |-
+          Optional: the caller may not have kept it. Without it only the access
+          token is dropped, and the session dies at the next refresh attempt.
+        type: string
+    type: object
+  handlers.moveTrackRequest:
+    properties:
+      after_track_id:
+        type: string
+      version:
+        type: integer
+    required:
+    - version
+    type: object
+  handlers.refreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  handlers.registerRequest:
+    properties:
+      display_name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      email:
+        type: string
+      password:
+        maxLength: 72
+        minLength: 8
+        type: string
+    required:
+    - display_name
+    - email
+    - password
+    type: object
+  handlers.resetPasswordRequest:
+    properties:
+      password:
+        maxLength: 72
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
+  handlers.setSubscriptionRequest:
+    properties:
+      note:
+        maxLength: 200
+        type: string
+      tier:
+        enum:
+        - free
+        - premium
+        type: string
+    required:
+    - tier
+    type: object
+  handlers.suggestTrackRequest:
+    properties:
+      deezer_id:
+        type: integer
+    required:
+    - deezer_id
+    type: object
+  handlers.tokenRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  handlers.tokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+    type: object
+  handlers.updatePlaylistRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      license:
+        enum:
+        - open
+        - invited_only
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      visibility:
+        enum:
+        - public
+        - private
+        type: string
+    type: object
+  handlers.updateProfileRequest:
+    type: object
+  handlers.voteRequest:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  service.HistoryEntry:
+    properties:
+      changed_at:
+        type: string
+      note:
+        type: string
+      tier:
+        type: string
+    type: object
+  service.Subscription:
+    properties:
+      expires_at:
+        type: string
+      tier:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: REST + WebSocket back-end for the MusicRoom collaborative music app.
+  title: MusicRoom API
+  version: "1.0"
+paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email address
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.forgotPasswordRequest'
+      responses:
+        "202":
+          description: Accepted
+      summary: Request a password reset email
+      tags:
+      - auth
+  /auth/google:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Google id_token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.googleAuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.tokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Sign in or register with a Google id_token
+      tags:
+      - auth
+  /auth/google/callback:
+    get:
+      parameters:
+      - description: Authorization code
+        in: query
+        name: code
+        type: string
+      - description: Opaque state issued by /auth/google/start
+        in: query
+        name: state
+        type: string
+      responses:
+        "302":
+          description: Found
+      summary: Google redirects here; bounces back to the app deep link
+      tags:
+      - auth
+  /auth/google/exchange:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: One-time code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.googleExchangeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.tokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Trade the one-time code from the deep link for a session
+      tags:
+      - auth
+  /auth/google/start:
+    get:
+      parameters:
+      - description: Deep link to return to; defaults to APP_REDIRECT_URL
+        in: query
+        name: redirect
+        type: string
+      - description: Link ticket from /users/me/oauth/google/link-ticket; turns the
+          flow into a link instead of a sign-in
+        in: query
+        name: link
+        type: string
+      - description: PKCE S256 challenge; /exchange then demands its verifier
+        in: query
+        name: code_challenge
+        type: string
+      responses:
+        "302":
+          description: Found
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Begin Google sign-in (redirects the browser to Google)
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.tokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Authenticate with email and password
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revokes the access token used for this request and, if given, the
+        refresh token and its rotation family. Other sessions of the same user are
+        untouched.
+      parameters:
+      - description: Refresh token to revoke as well
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handlers.logoutRequest'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: End the calling session
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.refreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.tokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Rotate refresh token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Token + new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.resetPasswordRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Apply a new password using reset token
+      tags:
+      - auth
+  /auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verification token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.tokenRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify email address
+      tags:
+      - auth
+  /events:
+    get:
+      description: Public events, plus the private ones the caller hosts or was invited
+        to.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List the events the caller may open
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Event payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create an event
+      tags:
+      - events
+  /events/{id}:
+    get:
+      parameters:
+      - description: Event UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get event details with sorted track queue
+      tags:
+      - events
+  /events/{id}/invitations:
+    get:
+      parameters:
+      - description: Event UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List invitations for an event (owner only)
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Event UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User to invite
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.inviteRequest'
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Invite a user to an event (owner only)
+      tags:
+      - events
+  /events/{id}/tracks:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Event UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Deezer track ID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.suggestTrackRequest'
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Suggest a track for an event
+      tags:
+      - events
+  /events/{id}/tracks/{trackId}/vote:
+    delete:
+      parameters:
+      - description: Event UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: EventTrack UUID
+        in: path
+        name: trackId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove vote from a track
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Event UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: EventTrack UUID
+        in: path
+        name: trackId
+        required: true
+        type: string
+      - description: GPS coords (required for time_and_location)
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handlers.voteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cast a vote on a track (idempotent)
+      tags:
+      - events
+  /friends:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List accepted friends
+      tags:
+      - friends
+  /friends/requests:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List incoming pending friend requests
+      tags:
+      - friends
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Target user ID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.friendRequestBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send a friend request (auto-accepts if reverse request exists)
+      tags:
+      - friends
+  /friends/requests/{id}/accept:
+    post:
+      parameters:
+      - description: Request UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Accept a friend request
+      tags:
+      - friends
+  /friends/requests/{id}/reject:
+    post:
+      parameters:
+      - description: Request UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Reject a friend request
+      tags:
+      - friends
+  /playlists:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List public playlists
+      tags:
+      - playlists
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Playlist payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createPlaylistRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a playlist
+      tags:
+      - playlists
+  /playlists/{id}:
+    get:
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get playlist with ordered tracks
+      tags:
+      - playlists
+    patch:
+      consumes:
+      - application/json
+      description: Every field is optional; an omitted one keeps its current value.
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to change
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updatePlaylistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a playlist's metadata (owner only)
+      tags:
+      - playlists
+  /playlists/{id}/collaborators:
+    get:
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List collaborators of a playlist
+      tags:
+      - playlists
+    post:
+      consumes:
+      - application/json
+      description: can_edit=false invites a viewer, who may open a private playlist
+        but not edit it. Re-inviting someone updates their right.
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.collaboratorRequest'
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Invite a user onto a playlist, or change their right (owner only)
+      tags:
+      - playlists
+  /playlists/{id}/collaborators/{userId}:
+    delete:
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Collaborator UUID
+        in: path
+        name: userId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Revoke a collaborator's invitation (owner only)
+      tags:
+      - playlists
+  /playlists/{id}/tracks:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Track + optional anchor
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.addPlaylistTrackRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a track to a playlist at a given position
+      tags:
+      - playlists
+  /playlists/{id}/tracks/{trackId}:
+    delete:
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: PlaylistTrack UUID
+        in: path
+        name: trackId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove a track from a playlist
+      tags:
+      - playlists
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: PlaylistTrack UUID
+        in: path
+        name: trackId
+        required: true
+        type: string
+      - description: Target anchor + expected version
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.moveTrackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Move a track (optimistic locking via version)
+      tags:
+      - playlists
+  /playlists/mine:
+    get:
+      description: Private playlists included — the owner always sees their own.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List the playlists the caller created
+      tags:
+      - playlists
+  /playlists/shared:
+    get:
+      description: 'Private playlists included. Each row carries can_edit: whether
+        the invitation is to edit or only to view.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List the playlists the caller was invited onto
+      tags:
+      - playlists
+  /tracks/{id}/preview:
+    get:
+      description: Deezer preview URLs are signed and expire, so the one stored with
+        a playlist or event track goes stale. This re-reads it from Deezer.
+      parameters:
+      - description: Deezer track id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a playable preview URL for a track
+      tags:
+      - tracks
+  /tracks/search:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "502":
+          description: Bad Gateway
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search tracks via Deezer
+      tags:
+      - tracks
+  /users/{id}:
+    get:
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a user's profile (filtered by friendship level)
+      tags:
+      - users
+  /users/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get the authenticated user's full profile
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Fields to update (omit to keep unchanged)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Partially update the authenticated user's profile
+      tags:
+      - users
+  /users/me/oauth/google:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Unlink Google account (refused if it is the only login method)
+      tags:
+      - auth
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Google id_token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.googleAuthRequest'
+      responses:
+        "204":
+          description: No Content
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Link a Google account to the authenticated user
+      tags:
+      - auth
+  /users/me/oauth/google/link-ticket:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Issue a single-use ticket authorizing a Google link for the caller
+      tags:
+      - auth
+  /users/me/subscription:
+    get:
+      description: Returns the tier in force — a premium whose term has run out reads
+        as free — and, for an active premium, its expiry.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.Subscription'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Read the caller's subscription
+      tags:
+      - subscription
+    put:
+      consumes:
+      - application/json
+      description: Upgrading starts a 30-day term; downgrading takes effect at once.
+        Both are recorded in the history.
+      parameters:
+      - description: Offer to switch to
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.setSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.Subscription'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Switch between the free and premium offers
+      tags:
+      - subscription
+  /users/me/subscription/history:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.HistoryEntry'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List the caller's subscription changes
+      tags:
+      - subscription
+  /ws-tickets:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Issue a one-time WebSocket ticket (30s TTL)
+      tags:
+      - websocket
+  /ws/events/{id}:
+    get:
+      parameters:
+      - description: Event UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: One-time ticket from POST /ws-tickets
+        in: query
+        name: ticket
+        required: true
+        type: string
+      responses:
+        "101":
+          description: Switching Protocols
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Open a WebSocket connection to an event room
+      tags:
+      - websocket
+  /ws/playlists/{id}:
+    get:
+      parameters:
+      - description: Playlist UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: One-time ticket from POST /ws-tickets
+        in: query
+        name: ticket
+        required: true
+        type: string
+      responses:
+        "101":
+          description: Switching Protocols
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Open a WebSocket connection to a playlist room
+      tags:
+      - websocket
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

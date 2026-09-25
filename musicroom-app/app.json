@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "musicroom-app",
+    "slug": "musicroom-app",
+    "scheme": "musicroom",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "name": "MusicRoom",
+      "shortName": "MusicRoom",
+      "description": "Collaborative music events and playlists.",
+      "backgroundColor": "#0d0d0d",
+      "themeColor": "#4db854",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-font",
+      "expo-status-bar",
+      "expo-audio"
+    ]
+  }
+}

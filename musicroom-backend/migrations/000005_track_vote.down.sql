@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS votes;
+DROP TABLE IF EXISTS event_tracks;
+DROP TABLE IF EXISTS event_invitations;
+DROP TABLE IF EXISTS events;

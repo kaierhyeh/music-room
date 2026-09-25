@@ -1,0 +1,12 @@
+# Overlay that swaps MailHog for a real SMTP server. Never loaded by default:
+# use `make docker-up-smtp`, which feeds it from the git-ignored .env.smtp.
+# The `:?` syntax aborts startup with a clear message on a missing variable
+# rather than silently booting with a half-empty config.
+services:
+  app:
+    environment:
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST in .env.smtp}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:?set SMTP_USER in .env.smtp}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?set SMTP_PASSWORD in .env.smtp}
+      SMTP_FROM: ${SMTP_FROM:?set SMTP_FROM in .env.smtp}

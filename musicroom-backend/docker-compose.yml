@@ -1,0 +1,90 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_USER: musicroom
+      POSTGRES_PASSWORD: musicroom
+      POSTGRES_DB: musicroom
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U musicroom -d musicroom"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # One-shot: applies every pending migration, then exits. The api waits for it
+  # to succeed, so a fresh volume can never serve requests against an empty
+  # schema. Re-running is a no-op once the database is up to date.
+  migrate:
+    image: docker.io/migrate/migrate
+    volumes:
+      - ./migrations:/migrations:ro
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://musicroom:musicroom@postgres:5432/musicroom?sslmode=disable"
+      - "up"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build: .
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://musicroom:musicroom@postgres:5432/musicroom?sslmode=disable
+      JWT_SECRET: dev-secret-change-me
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 720h
+      # The web client's page origin. It feeds two whitelists at once: the CORS
+      # middleware and the WebSocket CheckOrigin (router.go passes the same
+      # list). Serving the web build from a LAN address means adding it here —
+      # a browser sends the page's origin, not the API's. 8081 is Metro's
+      # default, which is why adminer below is kept off that port.
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8081,http://127.0.0.1:8081}
+      DEEZER_API_BASE: https://api.deezer.com
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SMTP_FROM: noreply@musicroom.local
+      # Read from .env, which is git-ignored: the client secret must not live in
+      # a committed file. Absent, the Google routes answer 503 by design.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:8080/auth/google/callback}
+      APP_REDIRECT_URL: ${APP_REDIRECT_URL:-musicroom://auth}
+      # Left at their defaults in normal use. A load test run from one machine
+      # raises them, or sets RATE_LIMIT_DISABLED=true, so that it measures the
+      # server instead of the limiter. See docs/BENCHMARK.md.
+      RATE_LIMIT_RPS: ${RATE_LIMIT_RPS:-}
+      RATE_LIMIT_AUTH_PER_MIN: ${RATE_LIMIT_AUTH_PER_MIN:-}
+      RATE_LIMIT_AUTH_BURST: ${RATE_LIMIT_AUTH_BURST:-}
+      RATE_LIMIT_DISABLED: ${RATE_LIMIT_DISABLED:-}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      mailhog:
+        condition: service_started
+
+  adminer:
+    image: docker.io/library/adminer
+    ports:
+      # Not 8081: that is Metro's default port, and Metro serving the web
+      # client on its default keeps the page origin stable for CORS above.
+      - "8090:8080"
+    depends_on:
+      - postgres
+
+  mailhog:
+    image: docker.io/mailhog/mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
+volumes:
+  pgdata:
