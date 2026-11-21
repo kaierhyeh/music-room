@@ -35,7 +35,7 @@ services:
     environment:
       PORT: "8080"
       DATABASE_URL: postgres://musicroom:musicroom@postgres:5432/musicroom?sslmode=disable
-      JWT_SECRET: dev-secret-change-me
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       JWT_ACCESS_TTL: 15m
       JWT_REFRESH_TTL: 720h
       # The web client's page origin. It feeds two whitelists at once: the CORS
